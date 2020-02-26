@@ -81,19 +81,19 @@ def transform_lidar(ranges, clip_threshold=30):
 	z = np.zeros(x.shape)
 	X = np.hstack([x, y, z, np.ones(x.shape)]).T
 	X = X[:, np.linalg.norm(X[:2, :], axis=0) >= 0.1]
-	return X
-
-def transform_head2body(x, yaw, pitch):
-	# x shape: (4, n) homogenous coordinates
-	assert x.shape[0] == 4
 	T_lidar2head = np.array([[1, 0, 0, 0],
 							 [0, 1, 0, 0],
 							 [0, 0, 1, 0.15],
 							 [0, 0, 0, 1]])
+	return T_lidar2head @ X
+
+def transform_head2body(x, yaw, pitch):
+	# x shape: (4, n) homogenous coordinates
+	assert x.shape[0] == 4
 	R = yawpitch2R(yaw, pitch)
 	t = np.array([[0], [0], [0.33]])
 	T_head2body = np.vstack([np.hstack([R, t]), np.array([0, 0, 0, 1])])
-	return T_head2body @ T_lidar2head @ x
+	return T_head2body @ x
 
 def transform_body2world(x, pose):
 	# x shape: (4, n) homogenous coordinates

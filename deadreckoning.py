@@ -17,12 +17,12 @@ config = {
 	'joint': 'THOR/joint/train_joint0',
 
 	# experiment configuration
-	'dirname': 'records',
+	'dirname': 'deadreckoning',
 	'expr_name': 'lidar0_particle100',
 	'plot_title': 'lidar0 particle 100 map',
 
 	# map configuration
-	'res': 0.1,
+	'res': 0.05,
 	'size': 40,
 	'free': -np.log(4),
 	'occ': np.log(4),
@@ -49,7 +49,7 @@ def main():
 	print(f"dataset statistics: \n\tlidar frames: {len(lidar)} \n\tjoint frames: {joint_ts.shape[1]}")
 
 	# main loop
-	for f in tqdm(range(1500,len(lidar))):
+	for f in tqdm(range(0,len(lidar))):
 		'''
 		data synchronization process: matching joint timestamp with the lidar timestamp
 		'''
@@ -84,8 +84,6 @@ class SLAMSystem(object):
 		self.particles[0, :] = self.particles[0, :] + delta_pose[0, 0]
 		self.particles[1, :] = self.particles[1, :] + delta_pose[1, 0]
 		self.particles[2, :] = self.particles[2, :] + delta_pose[2, 0]
-		# noise = (np.random.multivariate_normal(np.zeros(3), np.diag(np.ones(3)).astype(np.float32), tol=1e-5, size=self.particles.shape[1])).T
-		# noise = np.random.randn(3, self.particles.shape[1]) * 5e-3
 
 	def update_loop(self, lidar, joint):
 		ranges = lidar['scan']
