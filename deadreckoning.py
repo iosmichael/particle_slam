@@ -99,7 +99,7 @@ class SLAMSystem(object):
 		self.episodes += 1
 
 	def map_show(self, ep):
-		plt.imshow(self.map2d, cmap="RdBu", interpolation='none')
+		plt.imshow(self.map2d, cmap="gray", interpolation='none')
 		# plt.scatter(x=poses[0, :], y=poses[1, :], s=.05, c='g', marker='.')
 		# plt.scatter(x=self.delta_poses[1, :], y=self.delta_poses[0, :], s=.05, c='r', marker='x')
 		plt.title(f"{self.config['plot_title']}")

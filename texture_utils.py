@@ -1,14 +1,6 @@
 import numpy as np
 from THOR.load_data import *
 
-def transform_ir2kinect(X):
-	"""
-	x has the shape of 4 * N, where N is the number of pixels
-	"""
-	T_ir2rbg = np.hstack([getExtrinsics_IR_RGB()['rgb_R_ir'], getExtrinsics_IR_RGB()['rgb_T_ir'].reshape(-1,1)])
-	T_ir2rbg = np.vstack([T_ir2rbg, np.array([0,0,0,1])])
-	return T_ir2rbg @ X
-
 def transform_kinect2head(X):
 	T_kinect2head = np.array([[1, 0, 0, 0],
 							 [0, 1, 0, 0],
@@ -32,45 +24,33 @@ def get_uv1(img):
 	assert pts[0, 10, 0] == 10
 	return pts
 
-def get_depth2cam(depth, image, K_ir, K_rgb, T_ir2rgb):
+def get_depth2cam(depth, image, K_ir, K_rgb):
 	"""
 	:param - the depth (r, c) from the kinect image camera, and the calibration matrix of the image camera, the principal point of the image
 	:return - 3D point clouds with X: (N * 4)
 	"""
-	K_irv = np.linalg.inv(K_ir)
-	print(f"{K_ir} \n{K_irv}")
-	uv1 = get_uv1(depth)
-	X = K_irv[np.newaxis, np.newaxis, ...] @ uv1[..., :3, np.newaxis]
-	# K^-1 [x, y, 1] * Z = [X, Y, Z]
-	X[..., :3] = X[..., :3] * depth[..., np.newaxis] / 1000
-	assert np.allclose(X[..., 2], depth * 0.001)
-	# homogenize the 3d points
-	X[..., np.newaxis] = 1
-	# transformation from depth optical frame to camera optical frame
-	X = T_ir2rbg @ X.T
-	# [X', Y', Z']
-	uv_rgb = K_rgb @ X[:3, :]
-	uv_rgb2 = (uv_rgb / uv_rgb[-1, :])[:2, :].astype(np.int)
-	# 2 x n
+	uv_d = get_uv1(depth) # uv_d (IMG_HEIGHT * IMG_WIDTH * 4)
+	T = np.zeros((4,4))
+	T[:3, :3], T[:3, -1], T[-1, -1] = getExtrinsics_IR_RGB()['rgb_R_ir'], getExtrinsics_IR_RGB()['rgb_T_ir'], 1
+	xy_i = np.linalg.inv(K_ir) @ uv_d.reshape(-1, 3).T
+	
+	# get pixel colors through homography transformation
+	pix_pts = K_rgb @ (T[:3, :3] @ xy_i + T[:3,-1].reshape(-1,1))
+	pix_pts /= pix_pts[-1, :] # dehomogenize
+	pix_pts = pix_pts.astype(np.int)
 
-	# uv1_rgb: h x w x 3
-	uv1_rgb = get_uv1(image)
-	# xyz rgb
-	uv1_rgb = uv1_rgb[uv_rgb2[1, :], uv_rgb2[0, :], :].reshape(-1, 6).T
+	# filter out bad points outside of image
+	inds = np.logical_and(np.logical_and(pix_pts[1, :] >= 0, pix_pts[1, :] < image.shape[0]),
+						  np.logical_and(pix_pts[0, :] >= 0, pix_pts[0, :] < image.shape[1]))
+	pix_color = image[pix_pts[1, inds], pix_pts[0, inds], :].reshape(-1, 3).T # 3 * N
 
-	return X.reshape(-1, 4).T
+	xy_i *= (depth.reshape(1, -1) / 1000)
 
-def perspective_projection(x, K, R_c, p_c):
-	"""
-	from lecture slide 7 in ECE276A observation model
-	:param - x, [x,y,z] coordinates in the world frame 3 * N
-		   - K, camera calibration matrix, R_c|p_c, rotation and position of the camera in the world frame
-	:return - u, v, 1 pixel coordinates in the camera frame
-	"""
-	# rotation from regular to optical frame
-	R_o = np.array([[0, -1, 0], [0, 0, -1], [1, 0, 0]])
-	P = np.array([[1, 0, 0], [0, 1, 0]])
-	return P @ K @ R_o @ R_c.T @ (x - p_c.reshape(3,1))
+	xy_i = xy_i[:, inds]
+	xy_i = np.vstack((xy_i, np.ones((1, xy_i.shape[1])))) # homogenize xy
+	X_cam_pts = T @ xy_i # 4 * N
+	assert X_cam_pts.shape[1] == pix_color.shape[1]
+	return X_cam_pts, pix_color
 
 def from_optical2world(x_o):
 	"""

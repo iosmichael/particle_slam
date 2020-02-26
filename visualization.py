@@ -32,6 +32,10 @@ def visualize_preprocessing_imu(k=10):
 def visualize_synchronization():
 	lidar = get_lidar("THOR/lidar/train_lidar4")
 	joint = get_joint("THOR/joint/train_joint4")
+	print("===robot statistics===")
+	print(f"joint: {len(joint['ts'])}")
+	print(f"lidar: {len(lidar)}")
+
 	print(np.max(joint['ts']))
 	timestamps = []
 	for i in range(len(lidar)):

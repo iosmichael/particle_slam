@@ -2,17 +2,20 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 
-''' 
+"""
 example map configuration
+
 config = {
+	# map configuration
 	'res': 0.05,
-	'size': 40,
+	'size': 80,
 	'free': -np.log(4),
 	'occ': np.log(4),
-	'occ_thres': 20,
-	'thres': 200
+	'occ_thres': 5,
+	'logits_clip': 300,
 }
-'''
+"""
+
 def coord2pix(x, config):
 	'''
 	the shape of x is: [..., 2]
@@ -72,6 +75,7 @@ different transformation functions:
 2. body frame
 3. world frame
 '''
+
 def transform_lidar(ranges, clip_threshold=30):
 	ranges = np.clip(ranges, 0.1, clip_threshold)
 	angles = np.array([np.arange(-135,135.25,0.25)*np.pi/180.]).T
@@ -135,8 +139,7 @@ def yawpitch2R(yaw, pitch):
 	return R
 
 '''
-
-useless shit
+really slow stuff that doesn't give good quality particles
 
 def get_correlation(target, p_world, x_im, y_im):
 	# shifting around a 5 x 5 search grid

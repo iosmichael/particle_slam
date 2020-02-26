@@ -12,14 +12,15 @@ plt.figure(figsize=(6,6))
 plt.tight_layout()
 
 config = {
+	'dirname': 'lidar3_2000',
+	'data_dirname': 'data',
 	# experiment dataset
-	'lidar': 'THOR/lidar/train_lidar4',
-	'joint': 'THOR/joint/train_joint4',
+	'lidar': 'THOR/lidar/train_lidar3',
+	'joint': 'THOR/joint/train_joint3',
 
 	# experiment configuration
-	'dirname': 'lidar4_5000',
-	'expr_name': 'lidar4_particle100',
-	'plot_title': 'lidar4 particle 5000 map',
+	'expr_name': 'lidar3_particle2000',
+	'plot_title': 'lidar3 particle 2000 map',
 
 	# map configuration
 	'res': 0.05,
@@ -30,7 +31,7 @@ config = {
 	'logits_clip': 300,
 
 	# number of particles
-	'num_particles': 5000,
+	'num_particles': 2000,
 	'resample_thres': .4
 }
 
@@ -165,16 +166,12 @@ class SLAMSystem(object):
 			'pose3d': poses3d,
 			'poses2d': poses2d,
 			'map': self.map2d,
-			'ts': ts
+			'ts': ts,
+			'config': self.config
 		}
-		np.save(f"{self.config['dirname']}/{self.config['expr_name']}_data.npy", data)
+		np.save(f"{self.config['data_dirname']}/{self.config['expr_name']}_data.npy", data)
 		print(f"successfully saved data for {self.config['expr_name']}")
 		print(f"data statistics: poses3d: {poses3d.shape}, poses2d: {poses2d.shape}, map: {self.map2d.shape}, ts: {ts.shape}")
-
-	# def stats_draw(self, ep):
-	# 	plt.clf()
-	# 	plt.plot(self.correlations, c='g')
-	# 	plt.savefig(f'records/{expr_name}_corr_{ep}.png')
 
 if __name__ == '__main__':
 	# cProfile.run('main()','restats.txt')
