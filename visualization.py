@@ -29,21 +29,14 @@ def visualize_preprocessing_imu(k=10):
 	print(poses.shape)
 	plt.show()
 
-def visualize_synchronization():
-	lidar = get_lidar("THOR/lidar/train_lidar4")
-	joint = get_joint("THOR/joint/train_joint4")
-	print("===robot statistics===")
-	print(f"joint: {len(joint['ts'])}")
-	print(f"lidar: {len(lidar)}")
-
-	print(np.max(joint['ts']))
-	timestamps = []
-	for i in range(len(lidar)):
-		timestamps.append(lidar[i]['t'])
-	print(np.max(np.array(timestamps)))
-	
-	print('lidar behind joint ? ', np.max(np.array(timestamps)) > np.max(joint['ts']))
-	print('lidar before joint ? ', np.min(np.array(timestamps)) < np.min(joint['ts']))
+def visualize_dataset():
+	index = [0, 1, 2, 3, 4]
+	for i in index:
+		lidar = get_lidar(f"THOR/lidar/train_lidar{i}")
+		joint = get_joint(f"THOR/joint/train_joint{i}")
+		print(f"===robot statistics on dataset {i}===")
+		print(f"\tjoint: {len(joint['ts'][0])}")
+		print(f"\tlidar: {len(lidar)}")
 
 if __name__ == '__main__':
-	visualize_preprocessing_imu()
+	visualize_dataset()

@@ -33,6 +33,14 @@ np.random.seed(10)
 def main():
 	K_ir, K_rgb = get_K(is_rgb=False), get_K(is_rgb=True)
 
+	T = np.zeros((4,4))
+	T[:3, :3], T[:3, -1], T[-1, -1] = getExtrinsics_IR_RGB()['rgb_R_ir'], getExtrinsics_IR_RGB()['rgb_T_ir'], 1
+
+	print(K_ir)
+	print(K_rgb)
+	print(T)
+	assert False
+
 	img_data = dict(np.load(config['saved_data_path'], allow_pickle=True).item())
 	pose3d, pose2d, map2d, ts = img_data['pose3d'], img_data['poses2d'], img_data['map'], img_data['ts']
 
